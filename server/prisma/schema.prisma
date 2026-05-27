@@ -1,0 +1,131 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  admin
+  recruiter
+  interviewer
+  viewer
+}
+
+enum ApplicationStatus {
+  applied
+  screening
+  interview
+  offer
+  hired
+  rejected
+}
+
+enum InterviewStatus {
+  scheduled
+  completed
+  cancelled
+  no_show
+}
+
+enum JobStatus {
+  open
+  closed
+  on_hold
+}
+
+model User {
+  id           String       @id @default(uuid())
+  name         String
+  email        String       @unique
+  password     String
+  role         Role         @default(viewer)
+  avatar       String?
+  createdAt    DateTime     @default(now())
+  updatedAt    DateTime     @updatedAt
+  interviews   Interview[]  @relation("Interviewer")
+  auditLogs    AuditLog[]
+  applications Application[] @relation("RecruiterApplications")
+}
+
+model Candidate {
+  id           String        @id @default(uuid())
+  name         String
+  email        String        @unique
+  phone        String?
+  location     String?
+  currentRole  String?
+  skills       String[]
+  experience   Int?
+  resumeUrl    String?
+  resumeText   String?
+  source       String?
+  linkedinUrl  String?
+  portfolioUrl String?
+  notes        String?
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+  applications Application[]
+}
+
+model JobOpening {
+  id           String        @id @default(uuid())
+  title        String
+  department   String
+  location     String?
+  type         String        @default("full-time")
+  status       JobStatus     @default(open)
+  description  String?
+  requirements String[]
+  salaryMin    Int?
+  salaryMax    Int?
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+  applications Application[]
+}
+
+model Application {
+  id          String            @id @default(uuid())
+  candidateId String
+  jobId       String
+  recruiterId String?
+  status      ApplicationStatus @default(applied)
+  notes       String?
+  offerAmount Int?
+  createdAt   DateTime          @default(now())
+  updatedAt   DateTime          @updatedAt
+  candidate   Candidate         @relation(fields: [candidateId], references: [id])
+  job         JobOpening        @relation(fields: [jobId], references: [id])
+  recruiter   User?             @relation("RecruiterApplications", fields: [recruiterId], references: [id])
+  interviews  Interview[]
+}
+
+model Interview {
+  id            String          @id @default(uuid())
+  applicationId String
+  interviewerId String
+  scheduledAt   DateTime
+  type          String          @default("technical")
+  status        InterviewStatus @default(scheduled)
+  feedback      String?
+  rating        Int?
+  notes         String?
+  createdAt     DateTime        @default(now())
+  updatedAt     DateTime        @updatedAt
+  application   Application     @relation(fields: [applicationId], references: [id])
+  interviewer   User            @relation("Interviewer", fields: [interviewerId], references: [id])
+}
+
+model AuditLog {
+  id         String   @id @default(uuid())
+  userId     String
+  action     String
+  entity     String
+  entityId   String?
+  details    Json?
+  ipAddress  String?
+  createdAt  DateTime @default(now())
+  user       User     @relation(fields: [userId], references: [id])
+}

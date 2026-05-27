@@ -1,0 +1,17 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: recruitment_mis_db
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: recruitment_mis
+    ports:
+      - "5432:5432"
+    volumes:
+      - recruitment_mis_data:/var/lib/postgresql/data
+
+volumes:
+  recruitment_mis_data:
