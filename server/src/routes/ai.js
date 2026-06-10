@@ -1,19 +1,21 @@
 const express = require('express');
-const Anthropic = require('@anthropic-ai/sdk');
+const Groq = require('groq-sdk');
 const { PrismaClient } = require('@prisma/client');
 
 const router = express.Router();
 const prisma = new PrismaClient();
-const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
+const groq = new Groq({ apiKey: process.env.GROQ_API_KEY });
 
 async function chat(system, userContent) {
-  const response = await anthropic.messages.create({
-    model: 'claude-sonnet-4-6',
+  const response = await groq.chat.completions.create({
+    model: 'llama-3.3-70b-versatile',
     max_tokens: 1024,
-    system,
-    messages: [{ role: 'user', content: userContent }],
+    messages: [
+      { role: 'system', content: system },
+      { role: 'user', content: userContent },
+    ],
   });
-  return response.content[0].text;
+  return response.choices[0].message.content;
 }
 
 function parseJSON(text) {
